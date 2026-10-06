@@ -1,10 +1,10 @@
 const mongoose=require("mongoose")
+const bcryprt=require("bcrypt")
 
 const userSchema=new mongoose.Schema({
     name:{
         type:String,
         required:true,
-        unique:true
     },
     email:{
         type:String,
@@ -13,14 +13,31 @@ const userSchema=new mongoose.Schema({
     },
     password:{
         type:String,
-        required:true
+        required:true,
+        select:false
     },
-    confirmpassword:{
+    role:{
         type:String,
-        required:true
-    }   
+        required:true,
+        default:"user"
+    }
+    },
+    {
+        timestamps:true
+    } 
+);
+
+userSchema.pre("save",async function(next){
+    if(!this.isModified("password")){
+        next();
+    }
+
+    this.password=await bcrypt.hash(this.password,10)
+})
+
+userSchema.methods.comparePassword=async function(password){
+    return await bcrypt.compare(password,this.password)
 }
-,{timeStamps:true} );
 
 const User=mongoose.model("User",userSchema);
 
