@@ -1,12 +1,12 @@
 const { User } = require("../models/User.js");
 const bcrypt = require("bcryptjs");
-const {generateAccessToken,generateRefreshToken}=require("../utils/token.js")
+const {generateAccessToken,generateRefreshToken,verifyRefreshToken}=require("../utils/token.js")
 
 const registerUser = async (req, res) => {
     const { name, email, password} = req.body;
 
     try {
-        if (!name || !email || !password || !confirmpassword) {
+        if (!name || !email || !password) {
             return res.status(400).json({
                 message: "All fields are required"
             });
@@ -66,8 +66,8 @@ const loginUser = async (req, res) => {
             });
         }
 
-        const accessToken=generateAccessToken(user._id);
-        const refreshToken=generateRefreshToken(user._id);
+        const accessToken=await generateAccessToken(user._id);
+        const refreshToken=await generateRefreshToken(user._id);
 
         return res.status(200).json({
             message: "Login successful",
@@ -81,4 +81,35 @@ const loginUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser };
+const refreshAccessToken=async (req,res)=>{
+    const {refreshToken}=req.body;
+
+    try{
+        if(!refreshToken){
+            return res.status(401).json({message:"Unauthorized"})
+        }
+
+        const decoded=await verifyRefreshToken(refreshToken);
+
+        const accessToken=await generateAccessToken(decoded.id);
+
+        return res.status(200).json({accessToken})
+    }catch(e){
+        return res.status(401).json({message:e.message})
+    }
+}
+
+const getMe=async(req,res)=>{
+    try{
+        const user=await User.findById(req.user.id)
+
+        if(!user){
+            return res.status(400).json({message:"User not found"})
+        }
+        return res.status(200).json({user})
+    }catch(e){
+        return res.status(500).json({message:e.message})
+    }
+}
+
+module.exports = { registerUser, loginUser , refreshAccessToken, getMe};

@@ -2,9 +2,14 @@ require("dotenv").config();
 const express = require("express");
 const { checkDatabaseConnection } = require("./check-db.js");
 const { testRedis } = require("./check-redis.js");
+const authRoutes=require("./routes/authRoutes.js")
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+app.use(express.json());
+
+app.use("/api/auth",authRoutes)
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", uptime: process.uptime() });

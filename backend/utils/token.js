@@ -24,7 +24,12 @@ const generateRefreshToken=async (id)=>{
     )
 }
 
+const verifyRefreshToken=async(token)=>{
+    return jwt.verify(token,process.env.JWT_REFRESH_SECRET);
+}
+
 module.exports={
     generateAccessToken,
-    generateRefreshToken
+    generateRefreshToken,
+    verifyRefreshToken
 }
