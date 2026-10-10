@@ -42,6 +42,60 @@ const createApiKey=async(req,res)=>{
     }
 }
 
-module.exports={
-    createApiKey
-}
+const listApiKeys = async (req, res) => {
+    try {
+        const apiKeys = await ApiKey.find({
+            userId: req.user.id
+        }).select("-keyHash");
+
+        return res.status(200).json({ apiKeys });
+    } catch (e) {
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
+
+const revokeApiKey = async (req, res) => {
+    try {
+        const apiKey = await ApiKey.findOne({
+            _id: req.params.id,
+            userId: req.user.id
+        });
+
+        if (!apiKey) {
+            return res.status(404).json({
+                message: "API key not found"
+            });
+        }
+
+        if (apiKey.revoked) {
+            return res.status(400).json({
+                message: "API key already revoked"
+            });
+        }
+
+        apiKey.revoked = true;
+        await apiKey.save();
+
+        return res.status(200).json({
+            message: "API key revoked successfully"
+        });
+    } catch (e) {
+        if (e.name === "CastError") {
+            return res.status(400).json({
+                message: "Invalid API key ID"
+            });
+        }
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
+
+module.exports = {
+    createApiKey,
+    listApiKeys,
+    revokeApiKey
+};
